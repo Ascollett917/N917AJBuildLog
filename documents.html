@@ -61,6 +61,26 @@
       #document-count { color: var(--muted); font-size: .9rem; }
       .documents { display: grid; gap: 13px; }
 
+      .collection-link {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 24px;
+        padding: 18px 20px;
+        border: 1px solid #c9d9eb;
+        border-radius: 12px;
+        background: #edf5ff;
+        color: var(--ink);
+        text-decoration: none;
+      }
+
+      .collection-link:hover { border-color: var(--blue); background: #e5f0ff; }
+      .collection-link:focus-visible { outline: 3px solid #70cba1; outline-offset: 3px; }
+      .collection-link h3 { margin: 0 0 3px; font-size: 1.02rem; }
+      .collection-link p { margin: 0; color: var(--muted); font-size: .85rem; }
+      .collection-link-count { flex: 0 0 auto; color: var(--blue); font-size: .9rem; font-weight: 700; }
+
       .document {
         display: flex;
         align-items: center;
@@ -109,6 +129,13 @@
           <h2 id="documents-heading">Reference library</h2>
           <span id="document-count" aria-live="polite"></span>
         </div>
+        <a class="collection-link" href="./vans-plans.html">
+          <div>
+            <h3>Van's Plans</h3>
+            <p>Browse the aircraft plans by section.</p>
+          </div>
+          <span class="collection-link-count" id="plans-count">View plans →</span>
+        </a>
         <div id="status" class="status" role="status">Loading documents…</div>
         <div id="documents" class="documents"></div>
       </section>
@@ -120,6 +147,7 @@
       const documentsContainer = document.querySelector("#documents");
       const status = document.querySelector("#status");
       const documentCount = document.querySelector("#document-count");
+      const plansCount = document.querySelector("#plans-count");
 
       function formatDate(value) {
         const date = new Date(value);
@@ -191,16 +219,20 @@
 
       async function loadDocuments() {
         try {
-          const response = await fetch("./logs/documents.json");
-          if (!response.ok) throw new Error("The document list could not be loaded.");
-          const items = await response.json();
-          if (!Array.isArray(items)) throw new Error("The document list has an unexpected format.");
+          const [response, plansResponse] = await Promise.all([
+            fetch("./logs/documents.json"),
+            fetch("./logs/Documents/VansPlans/plans.json")
+          ]);
+          if (!response.ok || !plansResponse.ok) throw new Error("The document list could not be loaded.");
+          const [items, plans] = await Promise.all([response.json(), plansResponse.json()]);
+          if (!Array.isArray(items) || !Array.isArray(plans)) throw new Error("The document list has an unexpected format.");
 
           items.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
           documentsContainer.replaceChildren(...items.filter((item) =>
             item && typeof item.filename === "string" && item.filename.trim()
           ).map(createDocument));
           documentCount.textContent = `${items.length} ${items.length === 1 ? "document" : "documents"}`;
+          plansCount.textContent = `${plans.length} plans →`;
           status.hidden = true;
           if (items.length === 0) {
             status.hidden = false;
