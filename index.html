@@ -65,6 +65,23 @@
         font-size: clamp(1rem, 2.5vw, 1.2rem);
       }
 
+      .documents-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 20px;
+        padding: 8px 13px;
+        border: 1px solid rgb(255 255 255 / 55%);
+        border-radius: 999px;
+        color: #fff;
+        font-size: .9rem;
+        font-weight: 650;
+        text-decoration: none;
+        transition: background .15s;
+      }
+
+      .documents-link:hover, .documents-link:focus-visible { background: rgb(255 255 255 / 17%); }
+
       .stats {
         display: flex;
         flex-wrap: wrap;
@@ -321,6 +338,7 @@
          <h1>N917AJ</h1>
         <p class="eyebrow">Vans Aircraft RV10 · An Experimental Aircraft</p>       
         <p class="intro">A record of the people, projects, and small victories behind building an airplane.</p>
+        <a class="documents-link" href="./documents.html">Build documents <span aria-hidden="true">→</span></a>
         <div class="stats" aria-label="Build log statistics">
           <div class="stat"><strong id="total-entries">—</strong><span>build entries</span></div>
           <div class="stat"><strong id="total-time">—</strong><span>hours in the shop</span></div>

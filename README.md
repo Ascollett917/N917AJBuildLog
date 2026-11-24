@@ -2,8 +2,9 @@
 
 Static website for browsing the N917AJ aircraft build log. The page loads entries
 and categories from `logs/logs.json` and `logs/categories.json`, and uses the
-photo paths stored in the log data. Posts can also include optional `videos`
-arrays; video files belong in `logs/Videos/`.
+photo paths stored in the log data. The home page links to `documents.html`,
+which lists reference PDFs from `logs/documents.json`. Posts can also include
+optional `videos` arrays; video files belong in `logs/Videos/`.
 
 Open the site from a local web server so the browser can fetch the JSON files.
 For example, with Python installed:
