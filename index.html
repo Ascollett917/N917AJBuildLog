@@ -245,6 +245,12 @@
       .entry-gallery { border-top: 1px solid var(--line); }
       .photo-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 9px; padding: 0 14px 14px; }
 
+      .video-section { padding: 0 14px 16px; }
+      .video-section h4 { margin: 0 0 10px; font-size: .95rem; }
+      .video-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 14px; }
+      .video-gallery video { display: block; width: 100%; max-height: 420px; border-radius: 8px; background: #101820; }
+      .video-caption { margin: 6px 0 0 !important; color: var(--muted) !important; font-size: .82rem !important; }
+
       .gallery-photo {
         padding: 0;
         overflow: hidden;
@@ -409,6 +415,10 @@
         article.className = "entry";
         const assets = Array.isArray(entry.assets) ? entry.assets : [];
         const photos = assets.filter((asset) => asset && clean(asset.filename));
+        const videos = (Array.isArray(entry.videos) ? entry.videos : [])
+          .map((video) => typeof video === "string" ? { filename: video } : video)
+          .filter((video) => video && clean(video.filename));
+        const hasMedia = photos.length > 0 || videos.length > 0;
         const firstPhoto = photos[0];
         const gallery = document.createElement("div");
         gallery.className = "entry-gallery";
@@ -428,7 +438,7 @@
           const button = document.createElement("button");
           button.className = "photo-button";
           button.type = "button";
-          button.setAttribute("aria-label", `Open ${clean(entry.title) || "build log entry"} and view all photos`);
+          button.setAttribute("aria-label", `Open ${clean(entry.title) || "build log entry"} and view all photos and videos`);
           button.addEventListener("click", () => {
             gallery.hidden = false;
             titleButton.setAttribute("aria-expanded", "true");
@@ -462,7 +472,7 @@
         const title = document.createElement("h3");
         const titleText = clean(entry.title) || "Build log entry";
         let titleButton;
-        if (photos.length) {
+        if (hasMedia) {
           titleButton = document.createElement("button");
           titleButton.className = "entry-title";
           titleButton.type = "button";
@@ -531,8 +541,39 @@
             photoGrid.append(photoButton);
           });
           gallery.append(photoGrid);
-          article.append(gallery);
         }
+        if (videos.length) {
+          const videoSection = document.createElement("section");
+          videoSection.className = "video-section";
+          const videoHeading = document.createElement("h4");
+          videoHeading.textContent = "Videos";
+          videoSection.append(videoHeading);
+          const videoGrid = document.createElement("div");
+          videoGrid.className = "video-gallery";
+          videos.forEach((video, videoIndex) => {
+            const videoItem = document.createElement("div");
+            const player = document.createElement("video");
+            player.controls = true;
+            player.preload = "metadata";
+            player.playsInline = true;
+            player.src = assetUrl(video.filename);
+            const description = clean(video.title) || clean(video.description) ||
+              `${clean(entry.title) || "Build log"} video ${videoIndex + 1}`;
+            player.setAttribute("aria-label", description);
+            if (clean(video.poster)) player.poster = assetUrl(video.poster);
+            videoItem.append(player);
+            if (clean(video.description) || clean(video.title)) {
+              const caption = document.createElement("p");
+              caption.className = "video-caption";
+              caption.textContent = clean(video.title) || clean(video.description);
+              videoItem.append(caption);
+            }
+            videoGrid.append(videoItem);
+          });
+          videoSection.append(videoGrid);
+          gallery.append(videoSection);
+        }
+        if (hasMedia) article.append(gallery);
         return article;
       }
 
