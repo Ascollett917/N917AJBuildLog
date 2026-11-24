@@ -225,9 +225,39 @@
 
       .entry time, .reference { color: var(--muted); font-size: .8rem; }
       .entry h3 { margin: 10px 0 5px; font-size: 1.12rem; line-height: 1.35; }
+      .entry-title {
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 700;
+        text-align: left;
+      }
+
+      .entry-title:hover { color: var(--blue); text-decoration: underline; }
+      .entry-title:focus-visible { outline: 3px solid #70cba1; outline-offset: 3px; }
       .entry p { margin: 0; color: #526170; font-size: .92rem; }
       .entry-details { display: flex; flex-wrap: wrap; gap: 7px 13px; margin-top: 12px; }
       .reference { font-weight: 600; }
+
+      .entry-gallery { border-top: 1px solid var(--line); }
+      .photo-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 9px; padding: 0 14px 14px; }
+
+      .gallery-photo {
+        padding: 0;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--paper);
+        color: var(--muted);
+        cursor: zoom-in;
+        text-align: left;
+      }
+
+      .gallery-photo img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+      .gallery-photo span { display: block; padding: 5px 7px; font-size: .75rem; }
 
       .empty, .loading, .error {
         padding: 40px 20px;
@@ -374,11 +404,16 @@
         }
       }
 
-      function createEntry(entry) {
+      function createEntry(entry, index) {
         const article = document.createElement("article");
         article.className = "entry";
         const assets = Array.isArray(entry.assets) ? entry.assets : [];
-        const firstPhoto = assets.find((asset) => asset && clean(asset.filename));
+        const photos = assets.filter((asset) => asset && clean(asset.filename));
+        const firstPhoto = photos[0];
+        const gallery = document.createElement("div");
+        gallery.className = "entry-gallery";
+        gallery.id = `entry-gallery-${index}`;
+        gallery.hidden = true;
 
         if (firstPhoto) {
           const imageFrame = document.createElement("div");
@@ -393,12 +428,11 @@
           const button = document.createElement("button");
           button.className = "photo-button";
           button.type = "button";
-          button.setAttribute("aria-label", `View photo for ${clean(entry.title) || "build log entry"}`);
+          button.setAttribute("aria-label", `Open ${clean(entry.title) || "build log entry"} and view all photos`);
           button.addEventListener("click", () => {
-            largePhoto.src = assetUrl(firstPhoto.filename);
-            largePhoto.alt = image.alt;
-            photoCaption.textContent = clean(entry.title);
-            photoDialog.showModal();
+            gallery.hidden = false;
+            titleButton.setAttribute("aria-expanded", "true");
+            gallery.scrollIntoView({ behavior: "smooth", block: "nearest" });
           });
           imageFrame.append(button);
 
@@ -426,7 +460,23 @@
         body.append(meta);
 
         const title = document.createElement("h3");
-        title.textContent = clean(entry.title) || "Build log entry";
+        const titleText = clean(entry.title) || "Build log entry";
+        let titleButton;
+        if (photos.length) {
+          titleButton = document.createElement("button");
+          titleButton.className = "entry-title";
+          titleButton.type = "button";
+          titleButton.textContent = titleText;
+          titleButton.setAttribute("aria-expanded", "false");
+          titleButton.setAttribute("aria-controls", gallery.id);
+          titleButton.addEventListener("click", () => {
+            gallery.hidden = !gallery.hidden;
+            titleButton.setAttribute("aria-expanded", String(!gallery.hidden));
+          });
+          title.append(titleButton);
+        } else {
+          title.textContent = titleText;
+        }
         body.append(title);
         const summary = clean(entry.summary);
         if (summary) {
@@ -453,6 +503,36 @@
         }
         if (details.childElementCount) body.append(details);
         article.append(body);
+
+        if (photos.length) {
+          const photoGrid = document.createElement("div");
+          photoGrid.className = "photo-gallery";
+          photos.forEach((photo, index) => {
+            const photoButton = document.createElement("button");
+            photoButton.className = "gallery-photo";
+            photoButton.type = "button";
+            const photoDescription = clean(photo.description) || `${clean(entry.title) || "Build log"} photo ${index + 1}`;
+            photoButton.setAttribute("aria-label", `View ${photoDescription}`);
+            const thumbnail = document.createElement("img");
+            thumbnail.src = assetUrl(photo.filename);
+            thumbnail.alt = photoDescription;
+            thumbnail.loading = "lazy";
+            thumbnail.decoding = "async";
+            photoButton.append(thumbnail);
+            const caption = document.createElement("span");
+            caption.textContent = photoDescription;
+            photoButton.append(caption);
+            photoButton.addEventListener("click", () => {
+              largePhoto.src = assetUrl(photo.filename);
+              largePhoto.alt = photoDescription;
+              photoCaption.textContent = `${clean(entry.title)} · Photo ${index + 1} of ${photos.length}`;
+              photoDialog.showModal();
+            });
+            photoGrid.append(photoButton);
+          });
+          gallery.append(photoGrid);
+          article.append(gallery);
+        }
         return article;
       }
 
