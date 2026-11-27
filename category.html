@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#159957">
+    <meta name="description" content="Aircraft build log posts organized by category.">
+    <title>Build Category | N917AJ</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --blue: #155799;
+        --ink: #263238;
+        --muted: #64748b;
+        --line: #e5eaf0;
+        --paper: #fff;
+        --canvas: #f5f7f9;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        background: var(--canvas);
+        color: var(--ink);
+        font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      }
+
+      a { color: var(--blue); }
+
+      .hero {
+        padding: 38px 24px 40px;
+        background:
+          linear-gradient(90deg, rgb(8 20 34 / 78%), rgb(8 20 34 / 28%)),
+          url("./img_0204-banner.jpg") center 54% / cover no-repeat;
+        color: #fff;
+      }
+
+      .hero-inner, main, footer {
+        width: min(100% - 40px, 1080px);
+        margin-inline: auto;
+      }
+
+      .back-link { display: inline-block; margin-bottom: 20px; color: #e7f2ff; font-size: .92rem; text-decoration: none; }
+      .back-link:hover { text-decoration: underline; }
+      .eyebrow { margin: 0 0 8px; color: #d7f3e5; font-size: .75rem; font-weight: 750; letter-spacing: .16em; text-transform: uppercase; }
+      h1 { margin: 0; font-size: clamp(2.4rem, 7vw, 4.5rem); letter-spacing: -.055em; line-height: 1.05; }
+      .intro { max-width: 640px; margin: 17px 0 0; color: #eefaf4; font-size: clamp(1rem, 2.5vw, 1.2rem); }
+
+      main { min-height: 55vh; padding-block: 34px 64px; }
+      .section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 15px; }
+      h2 { margin: 0; font-size: 1.35rem; letter-spacing: -.025em; }
+      #result-count { color: var(--muted); font-size: .9rem; }
+      .entries { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr)); align-items: start; gap: 17px; }
+
+      .entry { overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); box-shadow: 0 3px 12px rgb(23 43 77 / 4%); }
+      .entry-photo { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #e9eef2; }
+      .entry-photo img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .25s; }
+      .entry:hover .entry-photo img { transform: scale(1.025); }
+      .photo-button { position: absolute; inset: 0; display: block; width: 100%; border: 0; background: transparent; cursor: zoom-in; }
+      .photo-count { position: absolute; right: 10px; bottom: 10px; z-index: 1; padding: 3px 8px; border-radius: 999px; background: rgb(20 30 40 / 78%); color: #fff; font-size: .75rem; pointer-events: none; }
+      .entry-body { padding: 17px 18px 18px; }
+      .entry-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 7px 10px; }
+      .category-label { padding: 3px 9px; border-radius: 999px; background: #e8f5ee; color: #16794a; font-size: .74rem; font-weight: 700; }
+      .entry time, .reference { color: var(--muted); font-size: .8rem; }
+      .entry h3 { margin: 10px 0 5px; font-size: 1.12rem; line-height: 1.35; }
+      .entry-title { padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; font: inherit; font-weight: 700; text-align: left; }
+      .entry-title:hover { color: var(--blue); text-decoration: underline; }
+      .entry-title:focus-visible, .photo-button:focus-visible, .gallery-photo:focus-visible, dialog button:focus-visible, .back-link:focus-visible { outline: 3px solid #70cba1; outline-offset: 3px; }
+      .entry p { margin: 0; color: #526170; font-size: .92rem; }
+      .entry-details { display: flex; flex-wrap: wrap; gap: 7px 13px; margin-top: 12px; }
+      .reference { font-weight: 600; }
+      .entry-gallery { border-top: 1px solid var(--line); }
+      .photo-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 9px; padding: 14px; }
+      .gallery-photo { padding: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--muted); cursor: zoom-in; text-align: left; }
+      .gallery-photo img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+      .gallery-photo span { display: block; padding: 5px 7px; font-size: .75rem; }
+      .video-section { padding: 0 14px 16px; }
+      .video-section h4 { margin: 0 0 10px; font-size: .95rem; }
+      .video-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 14px; }
+      .video-gallery video { display: block; width: 100%; max-height: 420px; border-radius: 8px; background: #101820; }
+      .video-caption { margin: 6px 0 0 !important; color: var(--muted) !important; font-size: .82rem !important; }
+      .status { padding: 40px 20px; border: 1px dashed #cbd5df; border-radius: 12px; background: var(--paper); color: var(--muted); text-align: center; }
+      .status.error { color: #a33a32; }
+      [hidden] { display: none !important; }
+      footer { padding-block: 20px 34px; border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; }
+
+      dialog { width: min(94vw, 1100px); max-width: none; max-height: 92vh; padding: 0; overflow: hidden; border: 0; border-radius: 12px; background: #101820; color: #fff; box-shadow: 0 18px 70px rgb(0 0 0 / 40%); }
+      dialog::backdrop { background: rgb(9 20 30 / 82%); }
+      dialog img { display: block; width: 100%; max-height: 82vh; object-fit: contain; }
+      .dialog-bar { display: flex; justify-content: space-between; gap: 15px; padding: 10px 14px; }
+      .dialog-bar p { margin: 0; align-self: center; }
+      .dialog-bar button { border: 0; background: transparent; color: #fff; cursor: pointer; font: inherit; }
+      @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; } }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero-inner">
+        <a class="back-link" href="./index.html">← All categories</a>
+        <p class="eyebrow">Experimental aircraft · N917AJ</p>
+        <h1 id="category-title">Build category</h1>
+        <p class="intro">Build log entries from this part of the project.</p>
+      </div>
+    </header>
+
+    <main>
+      <section aria-labelledby="entries-heading">
+        <div class="section-heading">
+          <h2 id="entries-heading">Posts in this category</h2>
+          <span id="result-count" aria-live="polite"></span>
+        </div>
+        <div id="status" class="status" role="status">Loading build entries…</div>
+        <div id="entries" class="entries"></div>
+      </section>
+    </main>
+
+    <footer>Built one step at a time. This log is for sharing the journey of N917AJ.</footer>
+
+    <dialog id="photo-dialog" aria-label="Build log photo">
+      <div class="dialog-bar">
+        <p id="photo-caption"></p>
+        <button id="close-photo" type="button" aria-label="Close photo">Close ×</button>
+      </div>
+      <img id="large-photo" alt="">
+    </dialog>
+
+    <script>
+      const clean = (value) => typeof value === "string" ? value.trim() : "";
+      const assetUrl = (filename) => "./logs/" + filename.split("/").map(encodeURIComponent).join("/");
+      const formatDate = (value) => {
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? "Date unavailable" : new Intl.DateTimeFormat(undefined, {
+          year: "numeric", month: "short", day: "numeric", timeZone: "UTC"
+        }).format(date);
+      };
+      const formatDuration = (seconds) => {
+        const hours = Number(seconds) / 3600;
+        return Number.isFinite(hours) && hours > 0 ? `${Number.isInteger(hours) ? hours : hours.toFixed(1)} hr${hours === 1 ? "" : "s"}` : "";
+      };
+      const entriesContainer = document.querySelector("#entries");
+      const status = document.querySelector("#status");
+      const resultCount = document.querySelector("#result-count");
+      const photoDialog = document.querySelector("#photo-dialog");
+      const largePhoto = document.querySelector("#large-photo");
+      const photoCaption = document.querySelector("#photo-caption");
+      const requestedCategory = new URLSearchParams(window.location.search).get("name")?.trim() || "";
+
+      function createEntry(entry, index) {
+        const article = document.createElement("article");
+        article.className = "entry";
+        const assets = Array.isArray(entry.assets) ? entry.assets : [];
+        const photos = assets.filter((asset) => asset && clean(asset.filename));
+        const videos = (Array.isArray(entry.videos) ? entry.videos : [])
+          .map((video) => typeof video === "string" ? { filename: video } : video)
+          .filter((video) => video && clean(video.filename));
+        const hasMedia = photos.length > 0 || videos.length > 0;
+        const gallery = document.createElement("div");
+        gallery.className = "entry-gallery";
+        gallery.id = `entry-gallery-${index}`;
+        gallery.hidden = true;
+
+        if (photos.length) {
+          const imageFrame = document.createElement("div");
+          imageFrame.className = "entry-photo";
+          const cover = document.createElement("img");
+          cover.src = assetUrl(photos[0].filename);
+          cover.alt = clean(photos[0].description) || `${clean(entry.title)} photo`;
+          cover.loading = "lazy";
+          cover.decoding = "async";
+          imageFrame.append(cover);
+          const imageButton = document.createElement("button");
+          imageButton.className = "photo-button";
+          imageButton.type = "button";
+          imageButton.setAttribute("aria-label", `Open ${clean(entry.title)} and view all media`);
+          imageButton.addEventListener("click", () => {
+            gallery.hidden = false;
+            titleButton.setAttribute("aria-expanded", "true");
+            gallery.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          });
+          imageFrame.append(imageButton);
+          if (photos.length > 1) {
+            const count = document.createElement("span");
+            count.className = "photo-count";
+            count.textContent = `${photos.length} photos`;
+            imageFrame.append(count);
+          }
+          article.append(imageFrame);
+        }
+
+        const body = document.createElement("div");
+        body.className = "entry-body";
+        const meta = document.createElement("div");
+        meta.className = "entry-meta";
+        const category = document.createElement("span");
+        category.className = "category-label";
+        category.textContent = clean(entry.category);
+        meta.append(category);
+        const date = document.createElement("time");
+        date.dateTime = clean(entry.created);
+        date.textContent = formatDate(entry.created);
+        meta.append(date);
+        body.append(meta);
+
+        const title = document.createElement("h3");
+        let titleButton;
+        if (hasMedia) {
+          titleButton = document.createElement("button");
+          titleButton.className = "entry-title";
+          titleButton.type = "button";
+          titleButton.textContent = clean(entry.title) || "Build log entry";
+          titleButton.setAttribute("aria-expanded", "false");
+          titleButton.setAttribute("aria-controls", gallery.id);
+          titleButton.addEventListener("click", () => {
+            gallery.hidden = !gallery.hidden;
+            titleButton.setAttribute("aria-expanded", String(!gallery.hidden));
+          });
+          title.append(titleButton);
+        } else {
+          title.textContent = clean(entry.title) || "Build log entry";
+        }
+        body.append(title);
+        if (clean(entry.summary)) {
+          const summary = document.createElement("p");
+          summary.textContent = clean(entry.summary);
+          body.append(summary);
+        }
+
+        const details = document.createElement("div");
+        details.className = "entry-details";
+        if (clean(entry.reference)) {
+          const reference = document.createElement("span");
+          reference.className = "reference";
+          reference.textContent = clean(entry.reference);
+          details.append(reference);
+        }
+        const duration = formatDuration(entry.timeSpent);
+        if (duration) {
+          const time = document.createElement("span");
+          time.className = "reference";
+          time.textContent = duration;
+          details.append(time);
+        }
+        if (details.childElementCount) body.append(details);
+        article.append(body);
+
+        if (photos.length) {
+          const photoGrid = document.createElement("div");
+          photoGrid.className = "photo-gallery";
+          photos.forEach((photo, photoIndex) => {
+            const photoDescription = clean(photo.description) || `${clean(entry.title)} photo ${photoIndex + 1}`;
+            const button = document.createElement("button");
+            button.className = "gallery-photo";
+            button.type = "button";
+            button.setAttribute("aria-label", `View ${photoDescription}`);
+            const thumbnail = document.createElement("img");
+            thumbnail.src = assetUrl(photo.filename);
+            thumbnail.alt = photoDescription;
+            thumbnail.loading = "lazy";
+            thumbnail.decoding = "async";
+            button.append(thumbnail);
+            const caption = document.createElement("span");
+            caption.textContent = photoDescription;
+            button.append(caption);
+            button.addEventListener("click", () => {
+              largePhoto.src = assetUrl(photo.filename);
+              largePhoto.alt = photoDescription;
+              photoCaption.textContent = `${clean(entry.title)} · Photo ${photoIndex + 1} of ${photos.length}`;
+              photoDialog.showModal();
+            });
+            photoGrid.append(button);
+          });
+          gallery.append(photoGrid);
+        }
+
+        if (videos.length) {
+          const videoSection = document.createElement("section");
+          videoSection.className = "video-section";
+          const heading = document.createElement("h4");
+          heading.textContent = "Videos";
+          videoSection.append(heading);
+          const videoGrid = document.createElement("div");
+          videoGrid.className = "video-gallery";
+          videos.forEach((video, videoIndex) => {
+            const item = document.createElement("div");
+            const player = document.createElement("video");
+            player.controls = true;
+            player.preload = "metadata";
+            player.playsInline = true;
+            player.src = assetUrl(video.filename);
+            player.setAttribute("aria-label", clean(video.title) || clean(video.description) || `${clean(entry.title)} video ${videoIndex + 1}`);
+            if (clean(video.poster)) player.poster = assetUrl(video.poster);
+            item.append(player);
+            const captionText = clean(video.title) || clean(video.description);
+            if (captionText) {
+              const caption = document.createElement("p");
+              caption.className = "video-caption";
+              caption.textContent = captionText;
+              item.append(caption);
+            }
+            videoGrid.append(item);
+          });
+          videoSection.append(videoGrid);
+          gallery.append(videoSection);
+        }
+
+        if (hasMedia) article.append(gallery);
+        return article;
+      }
+
+      async function loadCategory() {
+        if (!requestedCategory) {
+          status.classList.add("error");
+          status.textContent = "No category was specified. Return to the home page to choose a category.";
+          return;
+        }
+
+        try {
+          const [logsResponse, categoriesResponse] = await Promise.all([
+            fetch("./logs/logs.json"),
+            fetch("./logs/categories.json")
+          ]);
+          if (!logsResponse.ok || !categoriesResponse.ok) throw new Error("The build log data could not be loaded.");
+          const [logs, categories] = await Promise.all([logsResponse.json(), categoriesResponse.json()]);
+          if (!Array.isArray(logs) || !Array.isArray(categories)) throw new Error("The build log data has an unexpected format.");
+
+          const category = categories.find((item) => clean(item.name).toLocaleLowerCase() === requestedCategory.toLocaleLowerCase());
+          if (!category) {
+            status.classList.add("error");
+            status.textContent = `The category “${requestedCategory}” was not found. Return to the home page to choose a category.`;
+            return;
+          }
+
+          const categoryName = clean(category.name);
+          document.querySelector("#category-title").textContent = categoryName;
+          document.title = `${categoryName} | N917AJ Build Log`;
+          const entries = logs.filter((entry) =>
+            entry && clean(entry.title) && clean(entry.category).toLocaleLowerCase() === categoryName.toLocaleLowerCase()
+          ).sort((a, b) => new Date(b.created) - new Date(a.created));
+
+          entriesContainer.replaceChildren(...entries.map(createEntry));
+          resultCount.textContent = `${entries.length} ${entries.length === 1 ? "post" : "posts"}`;
+          status.hidden = true;
+          if (entries.length === 0) {
+            status.hidden = false;
+            status.textContent = `There are no posts in ${categoryName} yet.`;
+          }
+        } catch (error) {
+          status.classList.add("error");
+          status.textContent = `${error.message} Open this page through a local web server rather than directly as a file.`;
+        }
+      }
+
+      document.querySelector("#close-photo").addEventListener("click", () => photoDialog.close());
+      photoDialog.addEventListener("click", (event) => {
+        if (event.target === photoDialog) photoDialog.close();
+      });
+      loadCategory();
+    </script>
+  </body>
+</html>

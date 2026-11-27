@@ -122,64 +122,24 @@
         transform: translateY(-55%);
       }
 
-      #search {
-        width: 100%;
-        min-height: 48px;
-        padding: 11px 16px 11px 44px;
-        border: 1px solid #d5dde6;
-        border-radius: 10px;
-        background: var(--paper);
-        color: var(--ink);
-        font: inherit;
+      .category-sections { display: grid; gap: 30px; }
+      .category-section { max-width: 760px; }
+      .category-heading { margin: 0 0 11px; }
+      .category-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #16794a;
+        font-size: 1.05rem;
+        font-weight: 750;
+        text-decoration: none;
       }
 
-      #search:focus-visible, .filter:focus-visible, .photo-button:focus-visible,
-      dialog button:focus-visible {
+      .category-link:hover { color: var(--blue); text-decoration: underline; }
+      .category-link:focus-visible, .photo-button:focus-visible,
+      dialog button:focus-visible, .category-all-link:focus-visible {
         outline: 3px solid #70cba1;
         outline-offset: 2px;
-      }
-
-      .filters {
-        display: flex;
-        gap: 8px;
-        overflow-x: auto;
-        padding: 2px 2px 7px;
-        scrollbar-width: thin;
-      }
-
-      .filter {
-        flex: 0 0 auto;
-        padding: 7px 13px;
-        border: 1px solid #dce3e9;
-        border-radius: 999px;
-        background: var(--paper);
-        color: #425466;
-        cursor: pointer;
-        font: inherit;
-        font-size: .88rem;
-        transition: background .15s, color .15s, border-color .15s;
-      }
-
-      .filter:hover { border-color: #9dcdb5; }
-      .filter[aria-pressed="true"] { border-color: var(--green); background: var(--green); color: #fff; }
-      .filter-count { margin-left: 5px; opacity: .75; }
-
-      .section-heading {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 16px;
-        margin-bottom: 15px;
-      }
-
-      h2 { margin: 0; font-size: 1.35rem; letter-spacing: -.025em; }
-      #result-count { color: var(--muted); font-size: .9rem; }
-
-      .entries {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr));
-        align-items: start;
-        gap: 17px;
       }
 
       .entry {
@@ -261,6 +221,16 @@
       .entry-details { display: flex; flex-wrap: wrap; gap: 7px 13px; margin-top: 12px; }
       .reference { font-weight: 600; }
 
+      .category-all-link {
+        display: inline-block;
+        margin-top: 10px;
+        font-size: .9rem;
+        font-weight: 650;
+        text-decoration: none;
+      }
+
+      .category-all-link:hover { text-decoration: underline; }
+      .category-empty { margin: 0; color: var(--muted); }
       .entry-gallery { border-top: 1px solid var(--line); }
       .photo-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 9px; padding: 0 14px 14px; }
 
@@ -284,7 +254,7 @@
       .gallery-photo img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
       .gallery-photo span { display: block; padding: 5px 7px; font-size: .75rem; }
 
-      .empty, .loading, .error {
+      .loading, .error {
         padding: 40px 20px;
         border: 1px dashed #cbd5df;
         border-radius: 12px;
@@ -348,24 +318,9 @@
     </header>
 
     <main>
-      <section aria-label="Find a build log entry">
-        <div class="toolbar">
-          <label class="search-wrap">
-            <span hidden>Search entries</span>
-            <input id="search" type="search" placeholder="Search projects, notes, or references…" autocomplete="off">
-          </label>
-          <nav id="filters" class="filters" aria-label="Filter by project category"></nav>
-        </div>
-      </section>
-
-      <section aria-labelledby="entries-heading">
-        <div class="section-heading">
-          <h2 id="entries-heading">Build entries</h2>
-          <span id="result-count" aria-live="polite"></span>
-        </div>
+      <section aria-label="Build log categories">
         <div id="status" class="loading" role="status">Loading the build log…</div>
-        <div id="entries" class="entries"></div>
-        <div id="empty" class="empty" hidden>No entries match your search. Try another term or category.</div>
+        <div id="categories" class="category-sections"></div>
       </section>
     </main>
 
@@ -380,20 +335,16 @@
     </dialog>
 
     <script>
-      const entriesContainer = document.querySelector("#entries");
-      const filtersContainer = document.querySelector("#filters");
-      const searchInput = document.querySelector("#search");
+      const categoriesContainer = document.querySelector("#categories");
       const status = document.querySelector("#status");
-      const emptyState = document.querySelector("#empty");
-      const resultCount = document.querySelector("#result-count");
       const photoDialog = document.querySelector("#photo-dialog");
       const largePhoto = document.querySelector("#large-photo");
       const photoCaption = document.querySelector("#photo-caption");
       let allEntries = [];
-      let activeCategory = "all";
 
       const clean = (value) => typeof value === "string" ? value.trim() : "";
       const assetUrl = (filename) => "./logs/" + filename.split("/").map(encodeURIComponent).join("/");
+      const categoryUrl = (name) => `./category.html?name=${encodeURIComponent(name)}`;
       const formatDate = (value) => {
         const date = new Date(value);
         return Number.isNaN(date.getTime()) ? "Date unavailable" : new Intl.DateTimeFormat(undefined, {
@@ -405,32 +356,7 @@
         return Number.isFinite(hours) && hours > 0 ? `${Number.isInteger(hours) ? hours : hours.toFixed(1)} hr${hours === 1 ? "" : "s"}` : "";
       };
 
-      function makeFilter(label, category, count) {
-        const button = document.createElement("button");
-        button.className = "filter";
-        button.type = "button";
-        button.dataset.category = category;
-        button.setAttribute("aria-pressed", String(activeCategory === category));
-        button.append(document.createTextNode(label));
-        const countLabel = document.createElement("span");
-        countLabel.className = "filter-count";
-        countLabel.textContent = count;
-        button.append(countLabel);
-        button.addEventListener("click", () => {
-          activeCategory = category;
-          updateFilters();
-          renderEntries();
-        });
-        return button;
-      }
-
-      function updateFilters() {
-        for (const button of filtersContainer.children) {
-          button.setAttribute("aria-pressed", String(button.dataset.category === activeCategory));
-        }
-      }
-
-      function createEntry(entry, index) {
+      function createEntry(entry, index, showCategory = true) {
         const article = document.createElement("article");
         article.className = "entry";
         const assets = Array.isArray(entry.assets) ? entry.assets : [];
@@ -479,10 +405,12 @@
         body.className = "entry-body";
         const meta = document.createElement("div");
         meta.className = "entry-meta";
-        const category = document.createElement("span");
-        category.className = "category-label";
-        category.textContent = clean(entry.category) || "Uncategorized";
-        meta.append(category);
+        if (showCategory) {
+          const category = document.createElement("span");
+          category.className = "category-label";
+          category.textContent = clean(entry.category) || "Uncategorized";
+          meta.append(category);
+        }
         const date = document.createElement("time");
         date.dateTime = clean(entry.created);
         date.textContent = formatDate(entry.created);
@@ -597,19 +525,40 @@
         return article;
       }
 
-      function renderEntries() {
-        const query = searchInput.value.trim().toLocaleLowerCase();
-        const filtered = allEntries.filter((entry) => {
-          const category = clean(entry.category) || "Uncategorized";
-          const matchesCategory = activeCategory === "all" || category === activeCategory;
-          const searchable = [entry.title, entry.summary, entry.reference, category, entry.type]
-            .map(clean).join(" ").toLocaleLowerCase();
-          return matchesCategory && searchable.includes(query);
-        });
+      function renderCategoryPreviews(categories) {
+        const orderedCategories = categories.slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+        categoriesContainer.replaceChildren(...orderedCategories.map((item, index) => {
+          const name = clean(item.name);
+          const posts = allEntries.filter((entry) =>
+            clean(entry.category).toLocaleLowerCase() === name.toLocaleLowerCase() && clean(entry.title)
+          );
+          const section = document.createElement("section");
+          section.className = "category-section";
+          const heading = document.createElement("h2");
+          heading.className = "category-heading";
+          const link = document.createElement("a");
+          link.className = "category-link";
+          link.href = categoryUrl(name);
+          link.textContent = name;
+          heading.append(link);
+          section.append(heading);
 
-        entriesContainer.replaceChildren(...filtered.map(createEntry));
-        resultCount.textContent = `${filtered.length} ${filtered.length === 1 ? "entry" : "entries"}`;
-        emptyState.hidden = filtered.length !== 0;
+          if (posts.length) {
+            section.append(createEntry(posts[0], `preview-${index}`, false));
+          } else {
+            const empty = document.createElement("p");
+            empty.className = "category-empty";
+            empty.textContent = "No build entries in this category yet.";
+            section.append(empty);
+          }
+
+          const allLink = document.createElement("a");
+          allLink.className = "category-all-link";
+          allLink.href = categoryUrl(name);
+          allLink.textContent = `View all ${posts.length} ${posts.length === 1 ? "post" : "posts"} →`;
+          section.append(allLink);
+          return section;
+        }));
       }
 
       async function loadBuildLog() {
@@ -626,24 +575,8 @@
             throw new Error("The build log data has an unexpected format.");
           }
 
-          allEntries = logs.slice().sort((a, b) => new Date(b.created) - new Date(a.created));
-          const categoryCounts = new Map();
-          for (const entry of allEntries) {
-            const category = clean(entry.category) || "Uncategorized";
-            categoryCounts.set(category, (categoryCounts.get(category) || 0) + 1);
-          }
-
-          const orderedCategories = categories.slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-          filtersContainer.append(makeFilter("All projects", "all", allEntries.length));
-          for (const category of orderedCategories) {
-            const name = clean(category.name);
-            if (name) filtersContainer.append(makeFilter(name, name, categoryCounts.get(name) || 0));
-          }
-          for (const [name, count] of categoryCounts) {
-            if (!orderedCategories.some((category) => clean(category.name) === name)) {
-              filtersContainer.append(makeFilter(name, name, count));
-            }
-          }
+          allEntries = logs.filter(Boolean)
+            .slice().sort((a, b) => new Date(b.created) - new Date(a.created));
 
           const totalSeconds = allEntries.reduce((total, entry) => {
             const seconds = Number(entry.timeSpent);
@@ -654,14 +587,13 @@
           document.querySelector("#latest-date").textContent = allEntries.length ? formatDate(allEntries[0].created) : "—";
 
           status.hidden = true;
-          renderEntries();
+          renderCategoryPreviews(categories.filter((category) => category && clean(category.name)));
         } catch (error) {
           status.className = "error";
           status.textContent = `${error.message} Open this page through a local web server rather than directly as a file.`;
         }
       }
 
-      searchInput.addEventListener("input", renderEntries);
       document.querySelector("#close-photo").addEventListener("click", () => photoDialog.close());
       photoDialog.addEventListener("click", (event) => {
         if (event.target === photoDialog) photoDialog.close();
