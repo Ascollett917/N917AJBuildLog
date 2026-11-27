@@ -95,8 +95,7 @@
       }
 
       .document-info { display: flex; min-width: 0; align-items: flex-start; gap: 15px; }
-      .file-icon { display: grid; width: 44px; height: 50px; flex: 0 0 auto; place-items: center; border-radius: 8px; background: #fff0ef; color: #b63832; font-size: .73rem; font-weight: 800; }
-      .file-icon-archive { background: #edf5ff; color: var(--blue); }
+      .pdf-icon { display: grid; width: 44px; height: 50px; flex: 0 0 auto; place-items: center; border-radius: 8px; background: #fff0ef; color: #b63832; font-size: .73rem; font-weight: 800; }
       .document h3 { margin: 0 0 4px; font-size: 1.02rem; line-height: 1.35; overflow-wrap: anywhere; }
       .document-meta { margin: 0; color: var(--muted); font-size: .82rem; }
       .document-actions { display: flex; flex: 0 0 auto; flex-wrap: wrap; gap: 9px; }
@@ -177,12 +176,9 @@
         const info = document.createElement("div");
         info.className = "document-info";
         const icon = document.createElement("span");
-        const extension = item.filename.split(".").pop().toLowerCase();
-        const isPdf = extension === "pdf";
-        icon.className = "file-icon";
-        if (!isPdf) icon.classList.add("file-icon-archive");
+        icon.className = "pdf-icon";
         icon.setAttribute("aria-hidden", "true");
-        icon.textContent = extension.toUpperCase();
+        icon.textContent = "PDF";
         info.append(icon);
 
         const copy = document.createElement("div");
@@ -204,15 +200,13 @@
         const url = documentUrl(item.filename);
         const actions = document.createElement("div");
         actions.className = "document-actions";
-        if (isPdf) {
-          const open = document.createElement("a");
-          open.href = url;
-          open.target = "_blank";
-          open.rel = "noopener";
-          open.textContent = "Open PDF";
-          open.setAttribute("aria-label", `Open ${title.textContent} in a new tab`);
-          actions.append(open);
-        }
+        const open = document.createElement("a");
+        open.href = url;
+        open.target = "_blank";
+        open.rel = "noopener";
+        open.textContent = "Open PDF";
+        open.setAttribute("aria-label", `Open ${title.textContent} in a new tab`);
+        actions.append(open);
 
         const download = document.createElement("a");
         download.href = url;
