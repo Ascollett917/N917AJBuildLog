@@ -65,6 +65,42 @@
         font-size: clamp(1rem, 2.5vw, 1.2rem);
       }
 
+      .contributors {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 9px;
+        margin-top: 17px;
+      }
+
+      .contributors-label { color: #e0f5e9; font-size: .82rem; font-weight: 650; }
+      .contributor {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 4px 10px 4px 5px;
+        border: 1px solid rgb(255 255 255 / 27%);
+        border-radius: 999px;
+        background: rgb(255 255 255 / 10%);
+        color: #fff;
+        font-size: .82rem;
+      }
+
+      .contributor img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
+      .contributor-avatar {
+        display: grid;
+        width: 28px;
+        height: 28px;
+        place-items: center;
+        border-radius: 50%;
+        background: #e8f5ee;
+        color: #16794a;
+        font-size: .68rem;
+        font-weight: 750;
+      }
+
+      .contributor-role { color: #d7f3e5; font-size: .72rem; }
+
       .documents-link {
         display: inline-flex;
         align-items: center;
@@ -237,6 +273,7 @@
 
       .category-all-link:hover { text-decoration: underline; }
       .category-empty { margin: 0; color: var(--muted); }
+      .category-time { margin: 8px 0 0; color: var(--muted); font-size: .82rem; }
       .entry-gallery { border-top: 1px solid var(--line); }
       .photo-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 9px; padding: 0 14px 14px; }
 
@@ -322,10 +359,11 @@
         <p class="eyebrow">Experimental aircraft · N917AJ</p>
         <h1>The build log</h1>
         <p class="intro">A record of the people, projects, and small victories behind building an airplane.</p>
+        <div id="contributors" class="contributors" aria-label="Build contributors"></div>
         <a class="documents-link" href="./documents.html">Build documents <span aria-hidden="true">→</span></a>
         <div class="stats" aria-label="Build log statistics">
           <div class="stat"><strong id="total-entries">—</strong><span>build entries</span></div>
-          <div class="stat"><strong id="total-time">—</strong><span>hours in the shop</span></div>
+          <div class="stat"><strong id="total-time">—</strong><span>total build hours</span></div>
           <div class="stat"><strong id="latest-date">—</strong><span>most recent entry</span></div>
         </div>
       </div>
@@ -350,6 +388,7 @@
 
     <script>
       const categoriesContainer = document.querySelector("#categories");
+      const contributorsContainer = document.querySelector("#contributors");
       const status = document.querySelector("#status");
       const photoDialog = document.querySelector("#photo-dialog");
       const largePhoto = document.querySelector("#large-photo");
@@ -369,6 +408,51 @@
         const hours = Number(seconds) / 3600;
         return Number.isFinite(hours) && hours > 0 ? `${Number.isInteger(hours) ? hours : hours.toFixed(1)} hr${hours === 1 ? "" : "s"}` : "";
       };
+      const formatHours = (seconds) => {
+        const hours = Number(seconds) / 3600;
+        return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(hours);
+      };
+
+      function renderContributors(contributors) {
+        contributorsContainer.replaceChildren();
+        const label = document.createElement("span");
+        label.className = "contributors-label";
+        label.textContent = "Built by";
+        contributorsContainer.append(label);
+        const ordered = contributors.slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+        for (const person of ordered) {
+          const name = [person.givenName, person.middleName, person.familyName]
+            .map(clean).filter(Boolean).join(" ") || clean(person.organizationName);
+          if (!name) continue;
+
+          const chip = document.createElement("span");
+          chip.className = "contributor";
+          if (clean(person.filename)) {
+            const image = document.createElement("img");
+            image.src = assetUrl(person.filename);
+            image.alt = "";
+            image.loading = "lazy";
+            image.addEventListener("error", () => {
+              const avatar = document.createElement("span");
+              avatar.className = "contributor-avatar";
+              avatar.setAttribute("aria-hidden", "true");
+              avatar.textContent = name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+              image.replaceWith(avatar);
+            }, { once: true });
+            chip.append(image);
+          }
+          const personName = document.createElement("span");
+          personName.textContent = name;
+          chip.append(personName);
+          if (person.isMainBuilder) {
+            const role = document.createElement("span");
+            role.className = "contributor-role";
+            role.textContent = "Builder";
+            chip.append(role);
+          }
+          contributorsContainer.append(chip);
+        }
+      }
 
       function createEntry(entry, index, showCategory = true) {
         const article = document.createElement("article");
@@ -543,9 +627,14 @@
         const orderedCategories = categories.slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
         categoriesContainer.replaceChildren(...orderedCategories.map((item, index) => {
           const name = clean(item.name);
-          const posts = allEntries.filter((entry) =>
-            clean(entry.category).toLocaleLowerCase() === name.toLocaleLowerCase() && clean(entry.title)
+          const categoryEntries = allEntries.filter((entry) =>
+            clean(entry.category).toLocaleLowerCase() === name.toLocaleLowerCase()
           );
+          const posts = categoryEntries.filter((entry) => clean(entry.title));
+          const categorySeconds = categoryEntries.reduce((total, entry) => {
+            const seconds = Number(entry.timeSpent);
+            return total + (Number.isFinite(seconds) && seconds > 0 ? seconds : 0);
+          }, 0);
           const section = document.createElement("section");
           section.className = "category-section";
           const heading = document.createElement("h2");
@@ -566,6 +655,11 @@
             section.append(empty);
           }
 
+          const time = document.createElement("p");
+          time.className = "category-time";
+          time.textContent = `${formatHours(categorySeconds)} total build hours`;
+          section.append(time);
+
           const allLink = document.createElement("a");
           allLink.className = "category-all-link";
           allLink.href = categoryUrl(name);
@@ -577,16 +671,19 @@
 
       async function loadBuildLog() {
         try {
-          const [logsResponse, categoriesResponse] = await Promise.all([
+          const [logsResponse, categoriesResponse, contributorsResponse] = await Promise.all([
             fetch("./logs/logs.json"),
-            fetch("./logs/categories.json")
+            fetch("./logs/categories.json"),
+            fetch("./logs/contributors.json")
           ]);
-          if (!logsResponse.ok || !categoriesResponse.ok) {
-            throw new Error("The build log data could not be loaded.");
+          if (!logsResponse.ok || !categoriesResponse.ok || !contributorsResponse.ok) {
+            throw new Error("The build log or contributor data could not be loaded.");
           }
-          const [logs, categories] = await Promise.all([logsResponse.json(), categoriesResponse.json()]);
-          if (!Array.isArray(logs) || !Array.isArray(categories)) {
-            throw new Error("The build log data has an unexpected format.");
+          const [logs, categories, contributors] = await Promise.all([
+            logsResponse.json(), categoriesResponse.json(), contributorsResponse.json()
+          ]);
+          if (!Array.isArray(logs) || !Array.isArray(categories) || !Array.isArray(contributors)) {
+            throw new Error("The build log or contributor data has an unexpected format.");
           }
 
           allEntries = logs.filter(Boolean)
@@ -597,9 +694,10 @@
             return total + (Number.isFinite(seconds) && seconds > 0 ? seconds : 0);
           }, 0);
           document.querySelector("#total-entries").textContent = allEntries.length.toLocaleString();
-          document.querySelector("#total-time").textContent = Math.round(totalSeconds / 3600).toLocaleString();
+          document.querySelector("#total-time").textContent = formatHours(totalSeconds);
           document.querySelector("#latest-date").textContent = allEntries.length ? formatDate(allEntries[0].created) : "—";
 
+          renderContributors(contributors);
           status.hidden = true;
           renderCategoryPreviews(categories.filter((category) => category && clean(category.name)));
         } catch (error) {
