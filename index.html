@@ -15,7 +15,7 @@
         --muted: #64748b;
         --line: #e5eaf0;
         --paper: #fff;
-        --canvas: #c9ccce;
+        --canvas: #1b2630;
       }
 
       * { box-sizing: border-box; }
@@ -137,7 +137,7 @@
       .stat strong { font-size: 1.2rem; }
       .stat span { color: #e0f5e9; font-size: .8rem; }
 
-      main { padding-block: 34px 64px; }
+      main { padding-block: 34px 64px; color: #f1f5f9; }
 
       .toolbar {
         display: grid;
@@ -171,13 +171,13 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        color: #16794a;
+        color: #77d6a5;
         font-size: 1.05rem;
         font-weight: 750;
         text-decoration: none;
       }
 
-      .category-link:hover { color: var(--blue); text-decoration: underline; }
+      .category-link:hover { color: #9bd0ff; text-decoration: underline; }
       .category-link:focus-visible, .photo-button:focus-visible,
       dialog button:focus-visible, .category-all-link:focus-visible {
         outline: 3px solid #70cba1;
@@ -189,6 +189,7 @@
         border: 1px solid var(--line);
         border-radius: 12px;
         background: var(--paper);
+        color: var(--ink);
         box-shadow: 0 3px 12px rgb(23 43 77 / 4%);
       }
 
@@ -266,14 +267,16 @@
       .category-all-link {
         display: inline-block;
         margin-top: 10px;
+        color: #9bd0ff;
         font-size: .9rem;
         font-weight: 650;
         text-decoration: none;
       }
 
       .category-all-link:hover { text-decoration: underline; }
-      .category-empty { margin: 0; color: var(--muted); }
-      .category-time { margin: 8px 0 0; color: var(--muted); font-size: .82rem; }
+      .category-empty, .category-time { color: #c5d0d9; }
+      .category-empty { margin: 0; }
+      .category-time { margin: 8px 0 0; font-size: .82rem; }
       .entry-gallery { border-top: 1px solid var(--line); }
       .photo-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 9px; padding: 0 14px 14px; }
 
@@ -311,8 +314,8 @@
 
       footer {
         padding-block: 20px 34px;
-        border-top: 1px solid var(--line);
-        color: var(--muted);
+        border-top: 1px solid rgb(255 255 255 / 18%);
+        color: #c5d0d9;
         font-size: .85rem;
       }
 
